@@ -62,12 +62,16 @@ static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
+void user_pwm_setvalue(uint16_t v1,uint16_t v2);
+void HAL_Delay_us(uint16_t nus);
+	
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
 uint8_t ptim[] = "TIM2";//串口探针数据
+uint16_t pulse1=4000,pulse2=4000;//两个PWM通道的脉宽值
 
 /* USER CODE END 0 */
 
@@ -106,12 +110,15 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-	u8 i;
-	float t=0;
+
 	Lcd_Init();			//初始化OLED  
 	LCD_Clear(WHITE);
 	BACK_COLOR=WHITE;
   HAL_UART_Transmit(&huart1, (uint8_t *)ptim,sizeof(ptim),0xFFFF);
+	user_pwm_setvalue(pulse1,pulse2);
+	LCD_Clear(BLACK);
+
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -127,7 +134,20 @@ int main(void)
 		HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
     HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
 ****************************************************************/		
-
+    if(HAL_GPIO_ReadPin(KEY0_GPIO_Port,KEY0_Pin)==0)
+		{
+			HAL_Delay_us(50);
+			if(HAL_GPIO_ReadPin(KEY0_GPIO_Port,KEY0_Pin)==0)
+			{
+				pulse1+=50;
+				if(pulse1>8400)
+				{
+					pulse1=2000;
+				}
+				user_pwm_setvalue(pulse1,pulse2);
+			}
+			
+		}
 		LCD_ShowNum(28,0,0xef67,5,RED);   //中
 		HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
     HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
@@ -417,6 +437,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -428,6 +449,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED1_Pin|LED2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : KEY1_Pin KEY0_Pin */
+  GPIO_InitStruct.Pin = KEY1_Pin|KEY0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : OLED_SCL_Pin OLED_SDA_Pin OLED_RES_Pin OLED_DC_Pin 
                            OLED_CS_Pin OLED_BLK_Pin */
@@ -449,6 +476,35 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+/**
+  * @brief  PWM脉宽赋值
+  * @param  V1 一通道的脉宽
+  * @param  V2 二通道的脉宽
+  * @retval None
+  */
+void user_pwm_setvalue(uint16_t v1,uint16_t v2)
+{
+	TIM_OC_InitTypeDef sconfigoc,scfg2;
+	
+	sconfigoc.OCMode=TIM_OCMODE_PWM1;
+	sconfigoc.Pulse=v1;
+	sconfigoc.OCPolarity=TIM_OCPOLARITY_HIGH;
+	sconfigoc.OCFastMode=TIM_OCFAST_DISABLE;
+	HAL_TIM_PWM_ConfigChannel(&htim2,&sconfigoc,TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+	
+	scfg2.OCMode=TIM_OCMODE_PWM1;
+	scfg2.Pulse=v2;
+	scfg2.OCPolarity=TIM_OCPOLARITY_HIGH;
+	scfg2.OCFastMode=TIM_OCFAST_DISABLE;
+	HAL_TIM_PWM_ConfigChannel(&htim2,&scfg2,TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_2);
+}
+/**
+  * @brief  利用定时器5实现微秒延时函数
+  * @param  nus 要延时的微秒数
+  * @retval None
+  */
 void HAL_Delay_us(uint16_t nus)
 {	
 	uint16_t count;
