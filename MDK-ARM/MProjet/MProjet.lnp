@@ -1,9 +1,9 @@
 --cpu=Cortex-M4.fp
 "mprojet\startup_stm32f407xx.o"
+"mprojet\oled.o"
 "mprojet\main.o"
 "mprojet\stm32f4xx_it.o"
 "mprojet\stm32f4xx_hal_msp.o"
-"mprojet\oled.o"
 "mprojet\stm32f4xx_hal_tim.o"
 "mprojet\stm32f4xx_hal_tim_ex.o"
 "mprojet\stm32f4xx_hal_rcc.o"
