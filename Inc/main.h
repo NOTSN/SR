@@ -72,6 +72,14 @@ void Error_Handler(void);
 #define OLED_RES_GPIO_Port GPIOC
 #define OLED_DC_Pin GPIO_PIN_3
 #define OLED_DC_GPIO_Port GPIOC
+#define LMotorA_Pin GPIO_PIN_2
+#define LMotorA_GPIO_Port GPIOA
+#define LMotorB_Pin GPIO_PIN_3
+#define LMotorB_GPIO_Port GPIOA
+#define RMotorA_Pin GPIO_PIN_4
+#define RMotorA_GPIO_Port GPIOA
+#define RMotorB_Pin GPIO_PIN_5
+#define RMotorB_GPIO_Port GPIOA
 #define LED1_Pin GPIO_PIN_6
 #define LED1_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_7
@@ -80,6 +88,8 @@ void Error_Handler(void);
 #define OLED_CS_GPIO_Port GPIOC
 #define OLED_BLK_Pin GPIO_PIN_5
 #define OLED_BLK_GPIO_Port GPIOC
+#define F_CS_Pin GPIO_PIN_0
+#define F_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 
