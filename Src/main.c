@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "oled.h"
+#include "key.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -90,6 +91,8 @@ uint16_t pulse1=4000,pulse2=4000;//两个PWM通道的脉宽值
 uint8_t oled1[] = "LM";//OLED显示
 uint8_t oled2[] = "RM";//OLED显示
 uint32_t ecodl,ecodr;//两个电机100ms的脉冲数 由定时器13定时测量。
+uint16_t tcount14;//定时器14计数值，每10ms记一个数。
+uint8_t key0state,key1state,key0flag,key1flag;
 
 /* USER CODE END 0 */
 
@@ -135,15 +138,16 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM13_Init();
   /* USER CODE BEGIN 2 */
-
+	
+  HAL_TIM_Base_Start_IT(&htim14);
+	HAL_Delay(5);
+	HAL_TIM_Base_Start_IT(&htim13);
 	Lcd_Init();			//初始化OLED  
 	LCD_Clear(WHITE);
 	BACK_COLOR=BLACK;
   HAL_UART_Transmit(&huart1, (uint8_t *)ptim,sizeof(ptim),0xFFFF);
 	user_pwm_setvalue(pulse1,pulse2);
 	LCD_Clear(BLACK);
-  HAL_TIM_Base_Start_IT(&htim14);
-	HAL_TIM_Base_Start_IT(&htim13);
 	LCD_ShowNum(28,0,0xef67,5,RED);
 	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 	HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
@@ -160,7 +164,19 @@ int main(void)
     /* USER CODE BEGIN 3 */
 		LCD_ShowNum(28,0,ecodl,5,BLUE);
 		LCD_ShowNum(28,18,ecodr,5,BLUE);
-		HAL_Delay(50);		
+		HAL_Delay(50);	
+		if(key0flag==1)
+		{
+			LCD_ShowNum(28,36,0xeeee,5,BLUE);
+			key0flag=0;
+			
+		}
+		if(key1flag==1)
+		{
+			LCD_ShowNum(28,36,0xaaaa,5,BLUE);
+			key1flag=0;
+			
+		}
 /**********************TIM5延时测试******************************		
 		HAL_Delay_us(100);
 		HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
@@ -518,7 +534,7 @@ static void MX_TIM13_Init(void)
   htim13.Instance = TIM13;
   htim13.Init.Prescaler = 840-1;
   htim13.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim13.Init.Period = 20000-1;
+  htim13.Init.Period = 1000-1;
   htim13.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim13.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim13) != HAL_OK)
@@ -549,7 +565,7 @@ static void MX_TIM14_Init(void)
   htim14.Instance = TIM14;
   htim14.Init.Prescaler = 840-1;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 50000-1;
+  htim14.Init.Period = 1000-1;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
@@ -733,8 +749,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   UNUSED(htim);
   if(htim==&htim14)
 	{
-		HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
-    HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
+		tcount14++;
+		if(tcount14==50)
+		{
+			HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+			HAL_GPIO_TogglePin(LED2_GPIO_Port,LED2_Pin);
+			tcount14=0;
+		}
+		keyvalue();
 	}
 	if(htim==&htim13)
 	{
